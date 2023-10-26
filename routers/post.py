@@ -1,11 +1,9 @@
-from typing import List
-
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends
 from base.database import get_db
 from sqlalchemy.orm import Session
 from base.models import Post, User, Comment
 from base.schemas import CreatePost, ViewPost
-from authentication.security import decoded_token, get_user
+from authentication.security import get_user
 
 router = APIRouter()
 
@@ -93,7 +91,4 @@ def user_post_id(user_id: int, user: User = Depends(get_user), db: Session = Dep
     else:
         return []
 
-# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OX0.n5GIoCjWNhFSWVtdq0bcnmEYL04eumsvJ0nYFGpFc_E                  ПЕРВЫЙ
 
-
-# eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTB9.9cEpUGmXiaa5-cix_C88bwwnkbgpu6jM1OgVsebAqto        ВТОРОЙ

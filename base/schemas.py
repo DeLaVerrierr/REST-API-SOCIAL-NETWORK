@@ -1,7 +1,5 @@
 from pydantic import BaseModel
-from typing import List
 
-from base.models import Post
 
 
 class RegisterUser(BaseModel):

@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, Depends, Header
-
 from base.database import get_db
 from base.models import User
 
@@ -31,7 +30,7 @@ def extract_token(authorization: str) -> str:
 
 def decoded_token(token: str, db: Session):
     """
-    Получаем из JWT токена user id и возвращаем объект User
+    Проверяем токен JWT
     """
     try:
         decoded_token = jwt.decode(extract_token(token), SECRET_KEY_JWT, algorithms=["HS256"])
@@ -46,6 +45,9 @@ def decoded_token(token: str, db: Session):
 
 
 def get_user(authorization: str = Header(...), db: Session = Depends(get_db)):
+    """
+    Возвращает объект user
+    """
     user = decoded_token(authorization, db)
     if user:
         return user

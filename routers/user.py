@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
-from authentication.security import decoded_token, get_user
+from fastapi import APIRouter, Depends
+from authentication.security import get_user
 from base.models import User, Friend
 from base.schemas import UserProfile
 from base.database import get_db

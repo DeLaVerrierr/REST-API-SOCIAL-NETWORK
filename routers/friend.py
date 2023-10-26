@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends
 from base.database import get_db
 from sqlalchemy.orm import Session
-from base.models import Post, User, Comment, RequestFriend, Friend
-from base.schemas import CreatePost, ViewPost
-from authentication.security import decoded_token, get_user
+from base.models import User, RequestFriend, Friend
+from authentication.security import get_user
 
 router = APIRouter()
 
-#first_user_id тот кто отрпавил заявку
-#second_user_id тот кому пришла заявка
+
+# first_user_id тот кто отрпавил заявку
+# second_user_id тот кому пришла заявка
 
 
 # eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OX0.n5GIoCjWNhFSWVtdq0bcnmEYL04eumsvJ0nYFGpFc_E                  ПЕРВЫЙ 9
@@ -63,7 +63,8 @@ def accept_requests_friend(request_id: int, user: User = Depends(get_user), db: 
     else:
         return {"message": "Нет такой заявки"}
 
-#http://127.0.0.1:8000/api/v1/social-network/user/friend/friend-requests/received
+
+# http://127.0.0.1:8000/api/v1/social-network/user/friend/friend-requests/received
 @router.get('/friend-requests/received', summary='ViewFriendRequests', response_model=list[dict])
 def view_received_friend_requests(user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
@@ -83,6 +84,3 @@ def view_received_friend_requests(user: User = Depends(get_user), db: Session = 
         return request_list
     else:
         return []
-
-
-
