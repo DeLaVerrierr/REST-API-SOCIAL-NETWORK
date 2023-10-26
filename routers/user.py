@@ -60,8 +60,8 @@ def profile_user_jwt(friend_id: int, user: User = Depends(get_user), db: Session
     else:
         return {"message": "Друг не найден"}
 
-
-@router.post('/change-password', summary="Change Password", response_model=dict)
+#http://127.0.0.1:8000/api/v1/social-network/user/change-password
+@router.post('/change-password', summary="ChangePassword", response_model=dict)
 def profile_user_jwt(password: ChangePassword, user=Depends(get_user), db: Session = Depends(get_db)):
     """
     POST

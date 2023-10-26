@@ -49,7 +49,7 @@ def accept_requests_friend(request_id: int, user: User = Depends(get_user), db: 
 
 
 # http://127.0.0.1:8000/api/v1/social-network/user/friend/friend-requests/{request_id}/reject
-@router.post('/friend-requests/{request_id}/reject', summary='AcceptFriend', response_model=dict)
+@router.post('/friend-requests/{request_id}/reject', summary='RejectFriend', response_model=dict)
 def accept_requests_friend(request_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
     POST
