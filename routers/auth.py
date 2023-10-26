@@ -6,10 +6,10 @@ from base.database import get_db
 from sqlalchemy.orm import Session
 from email_validator import validate_email, EmailNotValidError
 
-
 router = APIRouter()
 
 
+# http://127.0.0.1:8000/api/v1/social-network/auth/register
 @router.post('/register', summary='RegisterUser', response_model=dict)
 def create_user(user: RegisterUser, db: Session = Depends(get_db)):
     """
@@ -30,7 +30,7 @@ def create_user(user: RegisterUser, db: Session = Depends(get_db)):
     hashed_password_str = hashed_password.decode("utf-8")
 
     # Создаем объект базы и сохраняем хеш пароля в виде строки
-    # Без decode он сохраняется с потерей salt
+    # Без decode("utf-8") он сохраняется с потерей salt
     user_object = User(name=user.name, surname=user.surname, mail=user.mail, password=hashed_password_str)
 
     db.add(user_object)
@@ -39,6 +39,7 @@ def create_user(user: RegisterUser, db: Session = Depends(get_db)):
     return response_data
 
 
+# http://127.0.0.1:8000/api/v1/social-network/auth/login
 @router.post('/login', summary='LoginUser', response_model=dict)
 def login_user(user: LoginUser, db: Session = Depends(get_db)):
     """
@@ -63,5 +64,3 @@ def login_user(user: LoginUser, db: Session = Depends(get_db)):
         return response_data
     else:
         raise HTTPException(status_code=400, detail={"error": "Неверный пароль"})
-
-
