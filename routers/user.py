@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
-from authentication.security import get_user
+from authentication.security import get_user, check_password, hash_password
 from base.models import User, Friend
-from base.schemas import UserProfile
+from base.schemas import UserProfile, ChangePassword
 from base.database import get_db
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
+
 router = APIRouter()
 
 
@@ -37,7 +38,8 @@ def profile_user_jwt(user: User = Depends(get_user), db: Session = Depends(get_d
         friends=friend_list
     )
 
-#http://127.0.0.1:8000/api/v1/social-network/user/delete-friend/{friend_id}
+
+# http://127.0.0.1:8000/api/v1/social-network/user/delete-friend/{friend_id}
 @router.post('/delete-friend/{friend_id}', summary="DeleteFriend", response_model=dict)
 def profile_user_jwt(friend_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
@@ -57,3 +59,22 @@ def profile_user_jwt(friend_id: int, user: User = Depends(get_user), db: Session
         return {"message": "Друг успешно удален"}
     else:
         return {"message": "Друг не найден"}
+
+
+@router.post('/change-password', summary="Change Password", response_model=dict)
+def profile_user_jwt(password: ChangePassword, user=Depends(get_user), db: Session = Depends(get_db)):
+    """
+    POST
+    Смена пароля
+    """
+    password_user = db.query(User).filter(User.id == user.id).first()
+
+    if check_password(password.old_password, password_user.password):
+        new_password = hash_password(password.new_password)
+        new_password_str = new_password.decode("utf-8")
+        password_user.password = new_password_str
+        db.commit()
+        return {"message": "Пароль успешно изменен"}
+    else:
+        return {"message": "Неверный пароль"}
+

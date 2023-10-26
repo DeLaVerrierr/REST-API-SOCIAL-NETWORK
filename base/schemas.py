@@ -34,3 +34,8 @@ class ViewPost(BaseModel):
 
 class CreateCommentPost(BaseModel):
     text: str
+
+
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str
