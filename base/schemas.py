@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
 
-
 class RegisterUser(BaseModel):
     name: str
     surname: str
@@ -25,15 +24,25 @@ class CreatePost(BaseModel):
     text: str
 
 
+class ChangePost(BaseModel):
+    new_text: str
+
+
 class ViewPost(BaseModel):
     id: int
     text: str
     created_at: str
     user_id: int
+    like_count: int
+    likes: list
 
 
 class CreateCommentPost(BaseModel):
     text: str
+
+
+class ChangeComment(BaseModel):
+    new_text: str
 
 
 class ChangePassword(BaseModel):

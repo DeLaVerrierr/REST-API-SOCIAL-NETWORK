@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,HTTPException
 from base.database import get_db
 from sqlalchemy.orm import Session
 from base.models import User, RequestFriend, Friend
@@ -21,9 +21,11 @@ router = APIRouter()
 @router.post('/friend-requests/{user_id}', summary='RequestsFriend', response_model=dict)
 def friend_requests(user_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    POST
-    Отправка запроса на дружбу по id пользователя
+    Отправка запроса на дружбу по user_id
     """
+    if user_id == user.id:
+        raise HTTPException(status_code=403, detail="Нельзя отправлять заявку в друзья самому себе")
+
     request_new = RequestFriend(first_user_id=user.id, second_user_id=user_id)
     db.add(request_new)
     db.commit()
@@ -34,8 +36,7 @@ def friend_requests(user_id: int, user: User = Depends(get_user), db: Session = 
 @router.post('/friend-requests/{request_id}/accept', summary='AcceptFriend', response_model=dict)
 def accept_requests_friend(request_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    POST
-    Принятие предложение дружбы
+    Принятие предложение дружбы по request_id
     """
     request_friend = db.query(RequestFriend).filter(RequestFriend.id == request_id).first()
     if request_friend:
@@ -45,15 +46,14 @@ def accept_requests_friend(request_id: int, user: User = Depends(get_user), db: 
         db.commit()
         return {"message": "Вы приняли предложение о дружбе"}
     else:
-        return {"message": "Нет такой заявки"}
+        raise HTTPException(status_code=404, detail="Заявка не найдена")
 
 
 # http://127.0.0.1:8000/api/v1/social-network/user/friend/friend-requests/{request_id}/reject
 @router.post('/friend-requests/{request_id}/reject', summary='RejectFriend', response_model=dict)
 def accept_requests_friend(request_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    POST
-    Отклонение предложение дружбы
+    Отклонение предложение дружбы по request_id
     """
     request_friend = db.query(RequestFriend).filter(RequestFriend.id == request_id).first()
     if request_friend:
@@ -61,14 +61,14 @@ def accept_requests_friend(request_id: int, user: User = Depends(get_user), db: 
         db.commit()
         return {"message": "Вы отклонили предложение о дружбе"}
     else:
-        return {"message": "Нет такой заявки"}
+        raise HTTPException(status_code=404, detail="Заявка не найдена")
+
 
 
 # http://127.0.0.1:8000/api/v1/social-network/user/friend/friend-requests/received
 @router.get('/friend-requests/received', summary='ViewFriendRequests', response_model=list[dict])
 def view_received_friend_requests(user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    GET
     Просмотр полученных запросов на дружбу
     """
     request_friend = db.query(RequestFriend).filter(RequestFriend.second_user_id == user.id).all()

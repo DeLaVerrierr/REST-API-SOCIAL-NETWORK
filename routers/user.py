@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from authentication.security import get_user, check_password, hash_password
 from base.models import User, Friend
 from base.schemas import UserProfile, ChangePassword
@@ -58,9 +58,9 @@ def profile_user_jwt(friend_id: int, user: User = Depends(get_user), db: Session
         db.commit()
         return {"message": "Друг успешно удален"}
     else:
-        return {"message": "Друг не найден"}
+        raise HTTPException(status_code=404, detail="Друг не найден")
 
-#http://127.0.0.1:8000/api/v1/social-network/user/change-password
+# http://127.0.0.1:8000/api/v1/social-network/user/change-password
 @router.post('/change-password', summary="ChangePassword", response_model=dict)
 def profile_user_jwt(password: ChangePassword, user=Depends(get_user), db: Session = Depends(get_db)):
     """
@@ -76,5 +76,4 @@ def profile_user_jwt(password: ChangePassword, user=Depends(get_user), db: Sessi
         db.commit()
         return {"message": "Пароль успешно изменен"}
     else:
-        return {"message": "Неверный пароль"}
-
+        raise HTTPException(status_code=401, detail="Неверный пароль")

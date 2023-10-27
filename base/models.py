@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey,Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -18,7 +18,6 @@ class User(Base):
 
     posts = relationship("Post", back_populates="user")
     comments = relationship("Comment", back_populates="user")
-
 
 
 class Comment(Base):
@@ -41,11 +40,19 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String)
     created_at = Column(DateTime, default=func.now())
-
+    like_count = Column(Integer, default=0)
     user_id = Column(Integer, ForeignKey('User.id'))
 
     user = relationship("User", back_populates="posts")
     comments = relationship("Comment", back_populates="post")
+    reactions = relationship("Reaction")
+
+
+class Reaction(Base):
+    __tablename__ = "Reaction"
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey('Post.id'))
+    user_id = Column(Integer, ForeignKey('User.id'))
 
 
 class Friend(Base):
@@ -54,6 +61,7 @@ class Friend(Base):
     second_user_id = Column(Integer, ForeignKey('User.id'), primary_key=True)
     created_at = Column(DateTime, default=func.now())
 
+
 class RequestFriend(Base):
     __tablename__ = "RequestFriend"
     id = Column(Integer, primary_key=True, index=True)
@@ -61,4 +69,3 @@ class RequestFriend(Base):
     second_user_id = Column(Integer, ForeignKey('User.id'))
     status = Column(String, default='request')
     created_at = Column(DateTime, default=func.now())
-

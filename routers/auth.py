@@ -13,17 +13,16 @@ router = APIRouter()
 @router.post('/register', summary='RegisterUser', response_model=dict)
 def create_user(user: RegisterUser, db: Session = Depends(get_db)):
     """
-    POST
     Регистрация пользователя
     """
     if len(user.password) < 6:
-        raise HTTPException(status_code=400, detail={"error": "Длина пароля должна быть больше 6 символов"})
+        raise HTTPException(status_code=400, detail="Длина пароля должна быть больше 6 символов")
 
     # Проверка почты на валидность
     try:
         validate_email(user.mail)
     except EmailNotValidError as e:
-        raise HTTPException(status_code=400, detail={"error": "Некорректный формат email-адреса"})
+        raise HTTPException(status_code=400, detail="Некорректный формат email-адреса")
 
     # Хешируем пароль
     hashed_password = hash_password(user.password)
@@ -43,13 +42,13 @@ def create_user(user: RegisterUser, db: Session = Depends(get_db)):
 @router.post('/login', summary='LoginUser', response_model=dict)
 def login_user(user: LoginUser, db: Session = Depends(get_db)):
     """
-    POST
-    авторизация пользователя и получение токена jwt
+    Авторизация пользователя по почте и паролю
+    и получение токена JWT
     """
     match_user_mail = db.query(User).filter(User.mail == user.mail).first()
 
     if match_user_mail is None:
-        raise HTTPException(status_code=400, detail={"error": "Неверная почта"})
+        raise HTTPException(status_code=400, detail="Неверная почта")
 
     if check_password(user.password, match_user_mail.password):
         user_data = {"id": match_user_mail.id}
@@ -63,4 +62,4 @@ def login_user(user: LoginUser, db: Session = Depends(get_db)):
 
         return response_data
     else:
-        raise HTTPException(status_code=400, detail={"error": "Неверный пароль"})
+        raise HTTPException(status_code=400, detail="Неверный пароль")
