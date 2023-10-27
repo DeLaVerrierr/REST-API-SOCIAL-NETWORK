@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from base.database import get_db
 from sqlalchemy.orm import Session
-from base.models import Comment, User, Post, Reaction
-from base.schemas import CreateCommentPost
+from base.models import User, Post, Reaction
+
 from authentication.security import get_user
 
 router = APIRouter()

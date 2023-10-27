@@ -21,7 +21,7 @@ def create_post(post: CreatePost, user: User = Depends(get_user), db: Session = 
     db.commit()
     return {"message": "Пост успешно создан"}
 
-
+# http://127.0.0.1:8000/api/v1/social-network/user/post/change-post/{post_id}
 @router.put('/change-post/{post_id}', summary='ChangeTextPost', response_model=dict)
 def change_post_text(post_id: int, text: ChangePost, user: User = Depends(get_user),
                      db: Session = Depends(get_db)):
@@ -40,7 +40,7 @@ def change_post_text(post_id: int, text: ChangePost, user: User = Depends(get_us
     else:
         raise HTTPException(status_code=404, detail="Пост не найден")
 
-
+# http://127.0.0.1:8000/api/v1/social-network/user/post/delete-post/{post_id}
 @router.delete('/delete-post/{post_id}', summary='DeletePost', response_model=dict)
 def delete_post(post_id: int, user: User = Depends(get_user),
                 db: Session = Depends(get_db)):
@@ -95,12 +95,10 @@ def view_user_post(user: User = Depends(get_user), db: Session = Depends(get_db)
         return []
 
 
-# http://127.0.0.1:8000/api/v1/social-network/user/post/{post_id}/comments/view
-@router.get('/{post_id}/comments/view', summary='ViewCommentPost', response_model=list[dict])
+@router.get('/{post_id}/comment', summary='ViewCommentPost', response_model=list[dict])
 def view_post_comment(post_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    GET
-    Просмотр комментариев поста по id поста
+    Просмотр комментариев поста по post_id
     """
     comments = db.query(Comment).filter(Comment.post_id == post_id).all()
     if comments:
@@ -118,25 +116,40 @@ def view_post_comment(post_id: int, user: User = Depends(get_user), db: Session 
         return []
 
 
-# http://127.0.0.1:8000/api/v1/social-network/user/post/{user_id}/view
-@router.get('/{user_id}/view', summary='UserPostID', response_model=list[dict])
+# http://127.0.0.1:8000/api/v1/social-network/user/post/all-post/{user_id}
+@router.get('/all-post/{user_id}', summary='UserPostID', response_model=list[ViewPost])
 def user_post_id(user_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
     GET
-    Просмотр поста по id пользователя
+    Просмотр постов по id пользователя
     """
-    posts = db.query(Post).filter(Post.user_id == user_id).all()
+    all_posts_user = db.query(Post).filter(Post.user_id == user_id).all()
 
-    if posts:
-        posts_list = [
-            {
-                "id": post.id,
-                "text": post.text,
-                "created_at": str(post.created_at),
-                "user_id": post.user_id
-            }
-            for post in posts
-        ]
-        return posts_list
+    if all_posts_user:
+        posts_user_dict = []
+        for post in all_posts_user:
+            likes = db.query(Reaction).filter(Reaction.post_id == post.id).all()
+            likes_info = []
+            for like in likes:
+                user_who_liked = db.query(User).filter(User.id == like.user_id).first()
+                likes_info.append({
+                    "user_id": user_who_liked.id,
+                    "name": user_who_liked.name,
+                    "surname": user_who_liked.surname
+                })
+                posts_user_dict.append({
+                    "id": post.id,
+                    "text": post.text,
+                    "created_at": str(post.created_at),
+                    "like_count": post.like_count,
+                    "user_id": post.user_id,
+                    "likes": likes_info
+                })
+
+        return posts_user_dict
     else:
         return []
+
+
+
+#http://127.0.0.1:8000/api/v1/social-network/user/post/4/comments/view
