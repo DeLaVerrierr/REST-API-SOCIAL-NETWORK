@@ -16,6 +16,7 @@ class User(Base):
     password = Column(String, index=True)
     status = Column(String, default='user')
 
+
     posts = relationship("Post", back_populates="user")
     comments = relationship("Comment", back_populates="user")
     sent_messages = relationship("Message", back_populates="sender", foreign_keys="Message.sender_id")
@@ -32,6 +33,7 @@ class Message(Base):
     text = Column(String, nullable=False)
     status = Column(String, default='sent')
     created_at = Column(DateTime, default=func.now())
+    key = Column(Integer, nullable=False)
 
     sender = relationship("User", foreign_keys=[sender_id])
     accepted = relationship("User", foreign_keys=[accepted_id])

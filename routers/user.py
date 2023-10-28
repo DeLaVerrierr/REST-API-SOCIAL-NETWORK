@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from authentication.security import get_user, check_password, hash_password
+from authentication.security import get_user, check_password, hash_object
 from base.models import User, Friend
 from base.schemas import UserProfile, ChangePassword
 from base.database import get_db
@@ -70,7 +70,7 @@ def profile_user_jwt(password: ChangePassword, user=Depends(get_user), db: Sessi
     password_user = db.query(User).filter(User.id == user.id).first()
 
     if check_password(password.old_password, password_user.password):
-        new_password = hash_password(password.new_password)
+        new_password = hash_object(password.new_password)
         new_password_str = new_password.decode("utf-8")
         password_user.password = new_password_str
         db.commit()

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
-from authentication.security import create_jwt_token, hash_password, check_password, SECRET_KEY_JWT
+from authentication.security import create_jwt_token, hash_object, check_password, SECRET_KEY_JWT
 from base.models import User
 from base.schemas import RegisterUser, LoginUser
 from base.database import get_db
@@ -25,7 +25,7 @@ def create_user(user: RegisterUser, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Некорректный формат email-адреса")
 
     # Хешируем пароль
-    hashed_password = hash_password(user.password)
+    hashed_password = hash_object(user.password)
     hashed_password_str = hashed_password.decode("utf-8")
 
     # Создаем объект базы и сохраняем хеш пароля в виде строки

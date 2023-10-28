@@ -54,19 +54,53 @@ def get_user(authorization: str = Header(...), db: Session = Depends(get_db)):
 
 
 
-def hash_password(password: str) -> bytes:
+def hash_object(object: str) -> bytes:
     """
     Хэширование пароля
     """
     salt = bcrypt.gensalt()
-    bytes = password.encode('utf-8')
+    bytes = object.encode('utf-8')
     hashed_password = bcrypt.hashpw(bytes, salt)
     return hashed_password
 
 
-def check_password(entered_password: str, hashed_password_from_db: str) -> bool:
+def check_password(entered_password: str, hashed_object_from_db: str) -> bool:
     """
     Проверка введенного пароля с хешируемым значением в базе
     """
-    binary_data = hashed_password_from_db.encode("utf-8")
+    binary_data = hashed_object_from_db.encode("utf-8")
     return bcrypt.checkpw(entered_password.encode("utf-8"), binary_data)
+
+
+
+
+abc = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz'
+def encrypt_caesar(message, key):
+    """
+    Шифровка сообщение
+    """
+    count = len(abc)
+    result = ""
+    for letter in message:
+        if letter.lower() in abc:
+            is_upper = letter.isupper()
+            letter = letter.lower()
+            idx = abc.index(letter)
+            new_idx = (idx + key) % count
+            new_letter = abc[new_idx]
+            if is_upper:
+                new_letter = new_letter.upper()
+            result += new_letter
+        else:
+            result += letter
+    return result
+
+def decrypt_caesar(message, key):
+    """
+    Расшифровка сообщение
+    """
+    return encrypt_caesar(message, -key)
+
+
+
+
