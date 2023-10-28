@@ -52,7 +52,7 @@ def change_comment_text(post_id: int, comment_id: int, text: ChangeComment, user
     """
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
     if comment:
-        if comment.user_id == user.id:
+        if comment.user_id == user.id or user.status == 'admin':
             db.delete(comment)
             db.commit()
             return {"message": "Комментарий успешно удален"}

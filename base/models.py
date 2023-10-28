@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey,Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -18,6 +18,23 @@ class User(Base):
 
     posts = relationship("Post", back_populates="user")
     comments = relationship("Comment", back_populates="user")
+    sent_messages = relationship("Message", back_populates="sender", foreign_keys="Message.sender_id")
+    accepted_messages = relationship("Message", back_populates="accepted", foreign_keys="Message.accepted_id")
+
+
+
+class Message(Base):
+    __tablename__ = "Message"
+
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey('User.id'))
+    accepted_id = Column(Integer, ForeignKey('User.id'))
+    text = Column(String, nullable=False)
+    status = Column(String, default='sent')
+    created_at = Column(DateTime, default=func.now())
+
+    sender = relationship("User", foreign_keys=[sender_id])
+    accepted = relationship("User", foreign_keys=[accepted_id])
 
 
 class Comment(Base):

@@ -13,7 +13,6 @@ router = APIRouter()
 @router.post('/create', summary='CreatePost', response_model=dict)
 def create_post(post: CreatePost, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    POST
     Создание поста с текстом
     """
     new_post = Post(text=post.text, user_id=user.id)
@@ -26,7 +25,6 @@ def create_post(post: CreatePost, user: User = Depends(get_user), db: Session = 
 def change_post_text(post_id: int, text: ChangePost, user: User = Depends(get_user),
                      db: Session = Depends(get_db)):
     """
-    PUT
     Редактирование текст поста по post_id
     """
     post = db.query(Post).filter(Post.id == post_id).first()
@@ -49,7 +47,7 @@ def delete_post(post_id: int, user: User = Depends(get_user),
     """
     post = db.query(Post).filter(Post.id == post_id).first()
     if post:
-        if post.user_id == user.id:
+        if post.user_id == user.id or user.status == 'admin':
             db.delete(post)
             db.commit()
             return {"message": "Пост успешно удален"}
