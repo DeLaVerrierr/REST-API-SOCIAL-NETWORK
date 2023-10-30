@@ -1,5 +1,10 @@
+import base64
+import json
+
+from cryptography.hazmat.primitives import serialization
 from fastapi import APIRouter, HTTPException, Depends
-from authentication.security import create_jwt_token, hash_object, check_password, SECRET_KEY_JWT
+from authentication.security import create_jwt_token, hash_object, check_password, SECRET_KEY_JWT, \
+    generate_rsa_key_pair, save_to_private_keys
 from base.models import User
 from base.schemas import RegisterUser, LoginUser
 from base.database import get_db
@@ -7,6 +12,9 @@ from sqlalchemy.orm import Session
 from email_validator import validate_email, EmailNotValidError
 
 router = APIRouter()
+
+
+
 
 
 # http://127.0.0.1:8000/api/v1/social-network/auth/register
@@ -28,12 +36,26 @@ def create_user(user: RegisterUser, db: Session = Depends(get_db)):
     hashed_password = hash_object(user.password)
     hashed_password_str = hashed_password.decode("utf-8")
 
+    # генерация ключей
+    private_key, public_key_user = generate_rsa_key_pair()
+
     # Создаем объект базы и сохраняем хеш пароля в виде строки
     # Без decode("utf-8") он сохраняется с потерей salt
     user_object = User(name=user.name, surname=user.surname, mail=user.mail, password=hashed_password_str)
-
+    user_object.save_public_key(public_key_user)
     db.add(user_object)
     db.commit()
+    # Переводим приватный ключ в строку
+    private_key_base64 = base64.b64encode(private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption()
+    )).decode('utf-8')
+
+    private_key_data = [{"user_id": user_object.id, "private_key": private_key_base64}]
+
+    save_to_private_keys(private_key_data)
+
     response_data = {"message": "Пользователь успешно зарегистрирован"}
     return response_data
 
