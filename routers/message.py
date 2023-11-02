@@ -41,7 +41,7 @@ def send_message(user_id: int, message: SendMessage, user: User = Depends(get_us
 @router.get('/test/{message_id}', summary='SendMessage', response_model=dict)
 def message_view(message_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    Тест расшифровки сообщение по его айди
+    Тест расшифровки сообщение по его id
     """
 
 
