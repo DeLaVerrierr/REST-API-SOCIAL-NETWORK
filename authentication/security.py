@@ -1,5 +1,3 @@
-import base64
-import binascii
 import json
 
 import jwt
@@ -10,11 +8,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, Depends, Header
 from base.database import get_db
 from base.models import User, Message
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
+import rsa
 
 load_dotenv('.env')
 SECRET_KEY_JWT = os.getenv('SECRET_KEY_JWT')
@@ -79,37 +73,6 @@ def check_password(entered_password: str, hashed_object_from_db: str) -> bool:
     return bcrypt.checkpw(entered_password.encode("utf-8"), binary_data)
 
 
-abc = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz'
-
-
-def encrypt_caesar(message, key):
-    """
-    Шифровка сообщение
-    """
-    count = len(abc)
-    result = ""
-    for letter in message:
-        if letter.lower() in abc:
-            is_upper = letter.isupper()
-            letter = letter.lower()
-            idx = abc.index(letter)
-            new_idx = (idx + key) % count
-            new_letter = abc[new_idx]
-            if is_upper:
-                new_letter = new_letter.upper()
-            result += new_letter
-        else:
-            result += letter
-    return result
-
-
-def decrypt_caesar(message, key):
-    """
-    Расшифровка сообщение
-    """
-    return encrypt_caesar(message, -key)
-
-
 ##########################################################
 
 private_keys_file = 'private_keys.json'
@@ -117,7 +80,7 @@ private_keys_file = 'private_keys.json'
 
 def save_to_private_keys(data):
     """
-    Сохарнение ключей в json файл
+    Сохранение ключей в json файл
     """
     try:
         with open(private_keys_file, 'r') as file:
@@ -129,41 +92,6 @@ def save_to_private_keys(data):
 
     with open(private_keys_file, 'w') as file:
         json.dump(existing_data, file)
-
-
-def load_private_key_from_data(private_key_base64):
-    """
-    Сериализация закрытого ключа для шифрования
-    """
-    private_key_pem = base64.b64decode(private_key_base64)
-    private_key = serialization.load_pem_private_key(private_key_pem, password=None, backend=default_backend())
-    return private_key
-
-
-def load_public_key_from_pem(pem_bytes):
-    """
-    Сериализация публичного ключа формата PEM для базы данных
-    """
-    public_key = serialization.load_pem_public_key(pem_bytes, backend=default_backend())
-    return public_key
-
-
-def encrypt_test(message, public_key):
-    """
-    Шифровка сообщение
-    """
-    # Сериализация ключа из базы
-    public_key = load_public_key_from_pem(public_key)
-    encrypted_message = public_key.encrypt(
-        message.encode('utf-8'),  # Переводим текст в байты
-        padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        )
-    )
-
-    return encrypted_message
 
 
 def load_private_key_from_file(user_id):
@@ -179,99 +107,46 @@ def load_private_key_from_file(user_id):
                 print(f"Вытаскиваем из json ключ айди {user_id}")
                 private_key_data = user_info.get("private_key")
                 print(f'Приватный ключ айди {user_id} вот такой {private_key_data}')
-                # private_key = load_private_key_from_data(private_key_data)
                 return private_key_data
     return None
 
-
-def byte_string(message):
-    """
-    Преобразование сообщение в байтовую строку
-    """
-    print(f'Вызов функции byte_string приняли {message}')
-    hex_string = message.replace('\\x', '').replace(' ', '')
-    byte_string = binascii.unhexlify(hex_string)
-    print(f'Вызов функции byte_string отдали {byte_string}')
-    return byte_string
-
-
-def decrypt_test(data, private_key):
-    try:
-        decrypted_message = private_key.decrypt(data, padding.OAEP(
-            mgf=padding.MGF1(algorithm=hashes.SHA256()),
-            algorithm=hashes.SHA256(),
-            label=None
-        ))
-        print(f'Приняли в decrypt_test ключ {private_key}')
-        return decrypted_message.decode('utf-8') if decrypted_message is not None else "Decryption failed"
-    except Exception as e:
-        print(f"Decryption failed: {str(e)}")
-        return "Decryption failed"
 
 def generate_rsa_key_pair():
     """
     Генерация ключей
     """
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-        backend=default_backend()
-    )
-
-    public_key = private_key.public_key()
-
-    return private_key, public_key
+    (pubkey, privkey) = rsa.newkeys(512)
+    # Преобразование ключей в строковое представление PEM
+    pubkey_str = pubkey.save_pkcs1().decode()
+    privkey_str = privkey.save_pkcs1().decode()
+    return privkey_str, pubkey_str
 
 
-# def message_decrypt(message_object):
-#     if not message_object:
-#         raise HTTPException(status_code=404, detail="Сообщение не найдено")
+
+
+
+
+# import rsa
+# (pubkey, privkey) = rsa.newkeys(512)
+# # Преобразование ключей в строковое представление PEM
+# pubkey_str = pubkey.save_pkcs1().decode()
+# privkey_str = privkey.save_pkcs1().decode()
+# print(pubkey)
+# # Теперь можно сохранить pubkey_str и privkey_str в базу данных
 #
-#     print(f'Кто отправил сообщение {message_object.sender_id}')
-#     key_from_json = load_private_key_from_file(message_object.sender_id)
-#     private_key = load_private_key_from_data(key_from_json)
-#     print('--------------')
-#     print(private_key)
-#     print('--------------')
-#     print(f'Сообщение из базы данных {message_object.text}')
-#     print('--------------')
-#     b_message = byte_string(message_object.text)
-#     print(f'Что передаем в функцию byte_string {b_message}')
-#     print('--------------')
-#     print(f'Вызов функции message_result')
-#     message_result = decrypt_test(b_message, private_key)
-#     print(f'Результат разшифрование {message_result}')
+# loaded_pubkey = rsa.PublicKey.load_pkcs1(pubkey_str.encode())
+# loaded_privkey = rsa.PrivateKey.load_pkcs1(privkey_str.encode())
+# print(loaded_pubkey)
+# my_str = 'Hello'
 #
-#     return {"decrypted_message": message_result}
-
-# 33     я          eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzN9.oLWDyibp2yb13P2Vrs2EslGmuxKxoi7ZbgN7g3Ac0jg
-# 34  Вадим         eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzR9.f5uhGYwmzg1JI4eNzcskIFxGzsg4wR86L3WrwsVZk1o
-
-def message_decrypt(message_object, user):
-    if not message_object:
-        raise HTTPException(status_code=404, detail="Сообщение не найдено")
-
-    sender_id = message_object.sender_id
-    accepted_id = message_object.accepted_id
-    print(f'Кто обратился к сообщению {user.id}')
-    print('----------')
-    print(f'Кто отправил сообщение {sender_id}')
-    print('----------')
-    print(f'Кому отправили сообщение {accepted_id}')
-
-    if user.id == sender_id:
-        key_from_json = load_private_key_from_file(user.id)
-        print('Пользователь есть отправитель')
-    else:
-        key_from_json = load_private_key_from_file(accepted_id)
-        print('Пользователь получатель')
-
-    private_key = load_private_key_from_data(key_from_json)
-    print(key_from_json)
-
-    b_message = byte_string(message_object.text)
-    message_result = decrypt_test(b_message, private_key)
+# message = str.encode(my_str)
+# # шифруем
+# crypto = rsa.encrypt(message, pubkey)
+# print(crypto)
+# #расшифровываем
+# message = rsa.decrypt(crypto, privkey)
+# print(message)
 
 
-    return {"decrypted_message": message_result}
-
+# 2 Amir eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mn0.FiAR5ShqvInBbMOsiDbx9VKI7DZPyPHC8181YV5bHQs
+# 3 Vadim    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6M30.bkSLi1o9LmUdlv7Fux44ciOy9keDX96-AZdCihkl4fM

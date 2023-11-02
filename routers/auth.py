@@ -14,9 +14,6 @@ from email_validator import validate_email, EmailNotValidError
 router = APIRouter()
 
 
-
-
-
 # http://127.0.0.1:8000/api/v1/social-network/auth/register
 @router.post('/register', summary='RegisterUser', response_model=dict)
 def create_user(user: RegisterUser, db: Session = Depends(get_db)):
@@ -41,18 +38,13 @@ def create_user(user: RegisterUser, db: Session = Depends(get_db)):
 
     # Создаем объект базы и сохраняем хеш пароля в виде строки
     # Без decode("utf-8") он сохраняется с потерей salt
-    user_object = User(name=user.name, surname=user.surname, mail=user.mail, password=hashed_password_str)
-    user_object.save_public_key(public_key_user)
+    user_object = User(name=user.name, surname=user.surname, mail=user.mail, password=hashed_password_str,
+                       public_key=public_key_user)
+
     db.add(user_object)
     db.commit()
-    # Переводим приватный ключ в строку
-    private_key_base64 = base64.b64encode(private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    )).decode('utf-8')
 
-    private_key_data = [{"user_id": user_object.id, "private_key": private_key_base64}]
+    private_key_data = [{"user_id": user_object.id, "private_key": private_key}]
 
     save_to_private_keys(private_key_data)
 

@@ -17,19 +17,13 @@ class User(Base):
     mail = Column(String, index=True)
     password = Column(String, index=True)
     status = Column(String, default='user')
-    public_key = Column(LargeBinary)
+    public_key = Column(String, index=True)
 
     posts = relationship("Post", back_populates="user")
     comments = relationship("Comment", back_populates="user")
     sent_messages = relationship("Message", back_populates="sender", foreign_keys="Message.sender_id")
     accepted_messages = relationship("Message", back_populates="accepted", foreign_keys="Message.accepted_id")
 
-    def save_public_key(self, public_key):
-        # Сохраняем открытый ключ в формате PEM
-        self.public_key = public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
 
 class Message(Base):
     __tablename__ = "Message"
@@ -40,7 +34,6 @@ class Message(Base):
     text = Column(String, nullable=False)
     status = Column(String, default='sent')
     created_at = Column(DateTime, default=func.now())
-    #key = Column(Integer, nullable=False)
 
     sender = relationship("User", foreign_keys=[sender_id])
     accepted = relationship("User", foreign_keys=[accepted_id])
