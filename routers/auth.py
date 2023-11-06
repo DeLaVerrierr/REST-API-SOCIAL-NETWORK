@@ -1,7 +1,3 @@
-import base64
-import json
-
-from cryptography.hazmat.primitives import serialization
 from fastapi import APIRouter, HTTPException, Depends
 from authentication.security import create_jwt_token, hash_object, check_password, SECRET_KEY_JWT, \
     generate_rsa_key_pair, save_to_private_keys
@@ -33,7 +29,7 @@ def create_user(user: RegisterUser, db: Session = Depends(get_db)):
     hashed_password = hash_object(user.password)
     hashed_password_str = hashed_password.decode("utf-8")
 
-    # генерация ключей
+    # Генерация ключей
     private_key, public_key_user = generate_rsa_key_pair()
 
     # Создаем объект базы и сохраняем хеш пароля в виде строки

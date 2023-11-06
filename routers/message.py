@@ -1,17 +1,12 @@
-import binascii
-import json
-
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import asc, or_
-import random
 from base.database import get_db
 from sqlalchemy.orm import Session
 from base.models import User, Message
-from base.schemas import MessageView
+from base.schemas import MessageResponse, SendMessage
 from authentication.security import get_user, load_private_key_from_file
 import rsa
 
-from base.schemas import SendMessage
 
 router = APIRouter()
 
@@ -25,8 +20,11 @@ def send_message(user_id: int, message: SendMessage, user: User = Depends(get_us
     accepted_user = db.query(User).filter(User.id == user_id).first()
 
     if accepted_user:
+        # Делаем из строки в объект публичный ключ
         loaded_pubkey = rsa.PublicKey.load_pkcs1(user.public_key.encode())
+        # Из строки делаеем байты
         message = str.encode(message.text)
+        # Зашифровываем сообщение передавая аргументы сообщение и публичный ключ как объект
         crypto_message = rsa.encrypt(message, loaded_pubkey)
 
         new_message = Message(sender_id=user.id, accepted_id=user_id, text=crypto_message)
@@ -37,14 +35,51 @@ def send_message(user_id: int, message: SendMessage, user: User = Depends(get_us
     raise HTTPException(status_code=404, detail="Пользователь не найден")
 
 
+@router.get('/{user_id}', summary='ViewMessage', response_model=List[MessageResponse])
+def correspondence(user_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
+    correspondence = db.query(Message).filter(
+        ((Message.sender_id == user.id) & (Message.accepted_id == user_id)) |
+        ((Message.sender_id == user_id) & (Message.accepted_id == user.id))
+    ).all()
+
+    if not correspondence:
+        raise HTTPException(status_code=404, detail="Диалог не найден")
+
+    response_messages = []
+
+    for message in correspondence:
+        # Вытаскиваем приватный ключ из json файла по id отправителя
+        private_key = load_private_key_from_file(message.sender_id)
+        # Из str делаем приватный ключ в объект
+        loaded_privkey = rsa.PrivateKey.load_pkcs1(private_key.encode())
+        # Убираем /x из зашифрованного текста
+        hex_string = message.text.replace("\\x", "").replace(" ", "")
+        # Делаем из него байты
+        byte_string = bytes.fromhex(hex_string)
+        # Расшифровываем передавая аргументы текст в байты и приватный ключ как объект
+        message_text = rsa.decrypt(byte_string, loaded_privkey)
+
+        sender_name = message.sender.name
+        accepted_name = message.accepted.name
+
+        response_message = {
+            "id": message.id,
+            "sender_name": sender_name,
+            "accepted_name": accepted_name,
+            "text": message_text,
+            "created_at": str(message.created_at),
+            "status": message.status
+        }
+        response_messages.append(response_message)
+
+    return response_messages
+
 
 @router.get('/test/{message_id}', summary='SendMessage', response_model=dict)
 def message_view(message_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
     Тест расшифровки сообщение по его id
     """
-
-
     message_object = db.query(Message).filter(Message.id == message_id).first()
 
     if message_object:
@@ -62,25 +97,27 @@ def message_view(message_id: int, user: User = Depends(get_user), db: Session = 
         # Разшифровываем текст
         message = rsa.decrypt(byte_string, loaded_privkey)
 
-        return {'message':message}
+        return {'message': message}
 
 
-
-
-
-@router.delete('/{message_id}', summary='SendMessage', response_model=dict)
-def message_one_delete(message_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
+@router.delete('/{user_id}/{message_id}', summary='SendMessage', response_model=dict)
+def message_one_delete(user_id: int, message_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
-    Удалить сообщение у твоих
+    Удалить сообщение у двоих
     """
-    # Проверка что он один из переписки
-    message_object = db.query(Message).filter(
-        or_(Message.accepted_id == user.id, Message.sender_id == user.id)
-    ).first()
-    if message_object:
-        delete_message = db.query(Message).filter(Message.id == message_id).first()
-        db.delete(delete_message)
+    # Для доступа к конечной точке пользователь должен быть отправителем сообщения, а другой участник переписки
+    # должен быть принимающим сообщение
+
+    correspondence = db.query(Message).filter(
+        (
+                (Message.sender_id == user.id) & (Message.accepted_id == user_id)
+        )
+    ).filter(Message.id == message_id).first()
+
+    if correspondence:
+        db.delete(correspondence)
         db.commit()
         return {"message": "Сообщение успешно удалено"}
     else:
         raise HTTPException(status_code=401, detail="Нет прав доступа")
+

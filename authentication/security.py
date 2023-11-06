@@ -104,9 +104,7 @@ def load_private_key_from_file(user_id):
     for user_list in private_keys:
         for user_info in user_list:
             if user_info.get("user_id") == user_id:
-                print(f"Вытаскиваем из json ключ айди {user_id}")
                 private_key_data = user_info.get("private_key")
-                print(f'Приватный ключ айди {user_id} вот такой {private_key_data}')
                 return private_key_data
     return None
 
@@ -120,10 +118,6 @@ def generate_rsa_key_pair():
     pubkey_str = pubkey.save_pkcs1().decode()
     privkey_str = privkey.save_pkcs1().decode()
     return privkey_str, pubkey_str
-
-
-
-
 
 
 # import rsa
@@ -148,5 +142,3 @@ def generate_rsa_key_pair():
 # print(message)
 
 
-# 2 Amir eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mn0.FiAR5ShqvInBbMOsiDbx9VKI7DZPyPHC8181YV5bHQs
-# 3 Vadim    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6M30.bkSLi1o9LmUdlv7Fux44ciOy9keDX96-AZdCihkl4fM

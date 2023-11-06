@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -62,10 +64,13 @@ class SendMessage(BaseModel):
     text: str
 
 
-class MessageView(BaseModel):
-    id_message: int
-    sender: str
-    accepted: str
+
+
+
+class MessageResponse(BaseModel):
+    id: int
+    sender_name: str
+    accepted_name: str
     text: str
     created_at: str
     status: str
