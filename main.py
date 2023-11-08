@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import auth, post, friend, user, comment, reaction, feed, message
+from routers import auth, post, friend, user, comment, reaction, feed, message, blacklist
 
 app = FastAPI()
 
@@ -11,3 +11,4 @@ app.include_router(reaction.router, prefix="/api/v1/social-network/user/post/{po
 app.include_router(friend.router, prefix="/api/v1/social-network/user/friend", tags=["Friends"])
 app.include_router(feed.router, prefix="/api/v1/social-network/feed", tags=["Feed"])
 app.include_router(message.router, prefix="/api/v1/social-network/user/message", tags=["Message"])
+app.include_router(blacklist.router, prefix="/api/v1/social-network/user/blacklist", tags=["Blacklist"])

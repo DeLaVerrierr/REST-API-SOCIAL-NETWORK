@@ -64,9 +64,6 @@ class SendMessage(BaseModel):
     text: str
 
 
-
-
-
 class MessageResponse(BaseModel):
     id: int
     sender_name: str
@@ -74,3 +71,9 @@ class MessageResponse(BaseModel):
     text: str
     created_at: str
     status: str
+
+
+class ViewBlacklist(BaseModel):
+    user_id: int
+    name: str
+    surname: str

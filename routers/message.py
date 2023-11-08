@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from base.database import get_db
 from sqlalchemy.orm import Session
-from base.models import User, Message
+from base.models import User, Message, Blacklist
 from base.schemas import MessageResponse, SendMessage
 from authentication.security import get_user, load_private_key_from_file
 import rsa
@@ -18,6 +18,11 @@ def send_message(user_id: int, message: SendMessage, user: User = Depends(get_us
     Отправка сообщение по user_id
     """
     accepted_user = db.query(User).filter(User.id == user_id).first()
+
+    blacklist = db.query(Blacklist).filter(Blacklist.who_added == user_id and Blacklist.who_was_added == user.id).first()
+    # Проверка есть ли он в черном списке
+    if blacklist:
+        raise HTTPException(status_code=403, detail="Вы в черном списке")
 
     if accepted_user:
         # Делаем из строки в объект публичный ключ

@@ -53,6 +53,14 @@ class Comment(Base):
     post = relationship("Post", back_populates="comments")
 
 
+class Blacklist(Base):
+    __tablename__ = "Blacklist"
+
+    id = Column(Integer, primary_key=True, index=True)
+    who_added = Column(Integer, ForeignKey('User.id'))
+    who_was_added = Column(Integer, ForeignKey('User.id'))
+
+
 class Post(Base):
     __tablename__ = "Post"
 
