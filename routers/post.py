@@ -92,7 +92,7 @@ def view_user_post(user: User = Depends(get_user), db: Session = Depends(get_db)
     else:
         return []
 
-
+# http://127.0.0.1:8000/api/v1/social-network/user/post/{post_id}/comment
 @router.get('/{post_id}/comment', summary='ViewCommentPost', response_model=list[dict])
 def view_post_comment(post_id: int, user: User = Depends(get_user), db: Session = Depends(get_db)):
     """
