@@ -43,7 +43,7 @@
 ![rsa.jpg](img_readme%2Frsa.jpg)
 
 ## Тестирование:
-1. 
+1. `pytest`
 
 ## Документация:
 1. `/docs/` автогенерация через Swagger
